@@ -1,0 +1,238 @@
+---
+title: "Brain Mass - Body Mass"
+output: html_notebook
+---
+Author: Ric Yeh
+
+### 需求
+
+在已知部分動物智力的情況下，  
+想透過一個公式或指數藉由數值指標評估動物的智力。
+
+### 問題
+
+是否可以使用腦重量與身體重量對智力進行評估？
+腦袋越大，是否越聰明？
+
+### 取得資料
+
+本篇使用的是[Springer Nature](https://springernature.figshare.com/articles/Brain_mass_and_body_mass_datasets_and_phylogenies_linked_to_brain-body_allometry_and_the_encephalization_of_birds_and_mammals/6803276)的哺乳類動物腦重與體重的數據。
+
+### 資料探索
+
+```{r echo=FALSE}
+library(readxl)
+library(tidyverse)
+
+# Plot setting
+plot.theme <- theme(text = element_text(family = "Heiti TC Light",
+                                        size = 12),
+                    plot.title = element_text(size = 24))
+```
+
+#### 匯入資料
+
+首先第一步驟是匯入資料，匯入資料後我們可以看到我們的raw data如下表，  
+該資料是在許多動物的樣本構成，每個物種都有單一或複數個樣本，  
+同時也摻雜了大量不會用的資訊，以及大量的NA數值，  
+這時候需要清理與塑形資料，讓他變成我們後續分析方便運用的資料。  
+
+```{r echo=FALSE}
+# Load Data
+raw <- read_excel("Tsuboi_etal_NEE_mammal.xlsx")
+print(head(raw))
+```
+
+#### 清理資料
+
+根據我們的資料需求以及上述資料的完整性，會使用到的資料只有三欄，  
+分別是物種、腦部重量與身體重量的部分，其他維度與指標可以不必採用，  
+此外，樣本中 `Brain mass (g)` & `Body mass (g)` 任一為空的欄位都代表其資料不完整，因此需要剔除其數據。 
+剔除無用數據後，根據「Species」為群組計算該種族內的「`Brain mass (g)`」與「`Body mass (g)`」的平均值，做為我們的資料，處理後如下圖。
+
+```{r echo=FALSE}
+# Tide Data (Simple)
+data <- raw %>% drop_na(`Brain mass (g)`, `Body mass (g)`) %>% 
+  group_by(Species) %>% 
+  summarise(`Mean Brain mass (g)` = mean(`Brain mass (g)`),
+            `Mean Body mass (g)` = mean(`Body mass (g)`)) %>% 
+  ungroup()
+
+# Transfer data type to factor
+data$Species <- as.factor(data$Species)
+print(data)
+```
+
+#### 快速製圖
+
+既然有了數字，就先繪製出來，觀看整體的分佈，再決定後續該如何做。  
+在下圖中以身體質量為X軸，腦質量為Y軸繪製，  
+但是會發現，靠近原點的地方因為點太過密集了，重疊在一起。 
+
+```{r echo=FALSE}
+ggplot(data,
+       aes(x = `Mean Body mass (g)`,
+           y = `Mean Brain mass (g)`)) + 
+  geom_point() +
+  labs(title = "Mean Body mass - Mean Brain mass",
+       x = "Mean Body mass (g)",
+       y = "Mean Brain mass (g)")
+```
+
+#### 透明度調整
+
+這時候我們可以調整點的透明度，可以藉此查看到點的密集區域的分佈狀況。  
+但這樣點在小型動物的地方依然過於密集，難以良好的傳達資訊與進行分析。  
+
+```{r echo=FALSE}
+ggplot(data,
+       aes(x = `Mean Body mass (g)`,
+           y = `Mean Brain mass (g)`)) + 
+  geom_point(alpha = 0.2) +
+  labs(title = "Mean Body mass - Mean Brain mass",
+       x = "Mean Body mass (g)",
+       y = "Mean Brain mass (g)")
+```
+
+#### 取對數
+
+在這種情況，建議將資料的兩個維度，都轉換成對數再進行計算。  
+因為這樣能更清楚的觀察到資料，而不被過大的數字差距影響。  
+我們可以明顯的察覺到，在Log腦重明顯的與體重呈現線性關係。  
+
+#### 取對數的好處
+
+* 不會改變資料的性質和相關關係，但壓縮了變數的尺度，方便應用
+* 取對數後，原本的乘除運算可轉換為加減運算
+* 對數值小的敏感度變大，對數值大的敏感度變小（例如對於購物的價格，買飲料時價格相差幾十元能夠很大程度影響你決策，但是你買房子時相差幾十元你會忽略不計。）
+* 還有更多不過暫時不提。
+
+```{r echo=FALSE}
+data <- data %>% mutate(`Log(Brain)` = log(`Mean Brain mass (g)`),
+                        `Log(Body)` = log(`Mean Body mass (g)`))
+print(head(data))
+
+ggplot(data,
+       aes(x = log(`Mean Body mass (g)`),
+           y = log(`Mean Brain mass (g)`))) + 
+  geom_point(alpha = 0.2) +
+  labs(title = "Mean Body mass - Mean Brain mass (Log)",
+       x = "Log(Mean Body mass)",
+       y = "Log(Mean Brain mass")
+```
+#### 探索比率之間的關係
+接下來我們探索各種不同的比率，來看到底哪種腦－體重比率最符合我們的認知。  
+這邊先稍微帶過一下基本的對數運算概念。 
+
+* 乘法可以轉換為加法
+$$ Log(a*b) = Log(a) + Log(b) $$
+* 除法可以轉換為減法
+$$ Log(\frac{a}{b}) = Log(a) - Log(b) $$
+* 次方可以轉換為乘法
+$$ Log(a^2) = 2*Log(a) $$
+* 前者可以混用
+$$ Log(a*b) = Log(a) + Log(b) $$
+* 更多細節暫時不提。
+
+#### 取樣
+
+首先為了呈現方便，先篩選一部分的物種作為顯示。  
+此外該取樣的物種的智慧程度是以知的：  
+`人類 > 寬吻海豚 > 獼猴 > 單峰駱駝 > 斑貓 > 狼 > 兔子 > 黑線姬鼠`  
+我們需要找出一個符合已知結果的公式，來用以表達動物智商的關係。
+
+```{r echo=FALSE}
+sample.name <- c("sapiens", "truncatus", "mulatta", "dromedarius", "silvestris", "lupus", "capensis", "agrarius")
+sample.name.trans <- c("sapiens" = "人類", 
+                       "truncatus" = "寬吻海豚",
+                       "mulatta" = "獼猴",
+                       "dromedarius" = "單峰駱駝", 
+                       "silvestris" = "斑貓", 
+                       "lupus" = "狼",
+                       "capensis" = "草兔",
+                       "agrarius" = "黑線姬鼠")
+data.sample <- data %>% filter(Species %in% sample.name)
+data.sample <- data.sample %>% mutate(Species = str_replace_all(Species, sample.name.trans))
+print(data.sample)
+```
+#### 製圖1 - 開始
+
+首先單純依照腦袋與身體重量進行繪圖：
+$$ Log(\frac{Brain}{Body}) = Log(Brain) - Log(Body) $$
+在該圖中，X軸是在原點的的左方，意味著長條越短數值越大，生物也越聰明。  
+我們會發現動物的智慧程度並不是單純與大腦與身體重量的比率相關的。  
+在下圖中，我們可以發現老鼠快要跟貓差不多聰明了，  
+但是現實不是湯姆貓與傑利鼠，結果也與一開始已知的條件不合，  
+所以我們還需要對這個公式做調整。
+```{r echo=FALSE}
+ggplot(data.sample,
+       aes(x = reorder(Species, `Log(Brain)`-`Log(Body)`),
+           y = `Log(Brain)`-`Log(Body)`)) + 
+  geom_bar(stat="identity") + 
+  labs(x = "Species",
+     y = "Log(Brain)-Log(Body)") +
+  coord_flip() + 
+  plot.theme
+```
+
+#### 製圖2 - 迭代
+
+此時可以試著讓大腦應該獲得更大的加權：
+$$ Log(\frac{Brain^2}{Body}) = 2*Log(Brain) - Log(Body) $$
+可以發現結果已經跟一開始的已知現象十分接近了，但仍有些許出入，  
+例如駱駝沒有跟獼猴一樣聰明，或許是因為駱駝的體重比較高，在沙漠地區需要多保存脂肪，  
+所以我們除了調整腦重的加權外，也需要對體重進行加權。  
+
+```{r echo=FALSE}
+ggplot(data.sample,
+       aes(x = reorder(Species, 2*`Log(Brain)`-`Log(Body)`),
+           y = 2*`Log(Brain)`-`Log(Body)`)) + 
+  geom_bar(stat="identity") + 
+  labs(x = "Species",
+       y = "2*Log(Brain)-Log(Body)") +
+  coord_flip() + 
+  plot.theme
+```
+
+#### 製圖3 - 最終
+
+那麼要如何加權呢？  
+偉大的科學家先烈們，這時想到，或許加權的方式可以借鑑表面積與體積的關係：
+因為動物的體重有許多部分是拿來儲存脂肪的，並沒有被大腦管理的價值，  
+所以使用表面積來作為分母會較使用體積作為分母好。  
+
+$$ V = L^3 ; A = L^2 ; A = V^\frac{2}{3} $$
+讓體積代表的是大腦，那體重對應到體表面積呢？
+$$ Brain^3 = Body^2 ; Brain = Body^\frac{2}{3} $$
+所以我們的公式改寫成下述的式子：
+$$ Log(\frac{Brain^3}{Body^2}) = 3*Log(Brain) - 2*Log(Body) $$
+```{r echo=FALSE}
+ggplot(data.sample,
+       aes(x = reorder(Species, 3*`Log(Brain)`-2*`Log(Body)`),
+           y = 3*`Log(Brain)`-2*`Log(Body)`)) + 
+  geom_bar(stat="identity") + 
+  labs(x = "Species",
+       y = "3*Log(Brain)-2*Log(Body)") +
+  coord_flip() + 
+  plot.theme
+```
+
+從上圖我們可以發現這個結果與一開始的已知答案是相符的，  
+所以可以以該結果來推估其他物種的智慧程度。
+
+這個過程就是一個探索的流程，我們根據資料，以及部分已知的結果，  
+去找出符合已知結果的公式或者推論，並以這個公式及推論，去推測未來！
+
+這過程聽起來是不是很耳熟呢？因為這同時也是機械學習的基本原理！
+其實機械學習就是在模擬人類探索資料的過程。
+
+### 結論
+
+* 此關係隱含著腦重量與體重的$\frac{2}{3}$次方成正比。
+* 體重的$\frac{2}{3}$次方代表著 `身體的表面積`
+* 每單位的身體表面，若有較多的腦控制處理，可能會更聰明
+* 身體表面積可能跟動物的神經系統正相關
+* $3*Log(Brain)-2*Log(Body)$也是生物學家採用來判斷動物智商的工具
+
+
+
