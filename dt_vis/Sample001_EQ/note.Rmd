@@ -1,17 +1,18 @@
 ---
-title: "Brain Mass - Body Mass"
+title: "Sample001 - Encephalization quotient"
 output: html_notebook
 ---
 Author: Ric Yeh
 
+本篇以探索動物智商的方式，探索資料，讓觀者能了解何謂資料分析的過程。
+
 ### 需求
 
 在已知部分動物智力的情況下，  
-想透過一個公式或指數藉由數值指標評估動物的智力。
+想藉由一個公式或函式評估動物的智力。
 
 ### 問題
 
-是否可以使用腦重量與身體重量對智力進行評估？
 腦袋越大，是否越聰明？
 
 ### 取得資料
