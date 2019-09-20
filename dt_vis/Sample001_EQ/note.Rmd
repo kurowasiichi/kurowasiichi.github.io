@@ -254,7 +254,8 @@ ggplot(data.sample,
 
 希望大家看完本篇，能夠更了解資料科學中探索的步驟與循環。
 
+### 參考文獻
 
-
-
-
+* Prof. Shih-Chung Kang, Data Visualization Course
+* [Wikipedia - Encephalization Quotient](https://en.wikipedia.org/wiki/Encephalization_quotient)
+* [Elements Graphing Data](http://www.amazon.com/Elements-Graphing-Data-William-Cleveland/dp/0963488414)
