@@ -171,7 +171,10 @@ $$ Log(\frac{Brain}{Body}) = Log(Brain) - Log(Body) $$
 我們會發現動物的智慧程度並不是單純與大腦與身體重量的比率相關的。  
 在下圖中，我們可以發現老鼠快要跟貓差不多聰明了，  
 但是現實不是湯姆貓與傑利鼠，結果也與一開始已知的條件不合，  
-所以我們還需要對這個公式做調整。
+所以我們還需要對這個公式做調整。  
+
+`人類 > 寬吻海豚 > 獼猴 > 單峰駱駝 > 斑貓 > 狼 > 兔子 > 黑線姬鼠`  
+
 ```{r echo=FALSE}
 ggplot(data.sample,
        aes(x = reorder(Species, `Log(Brain)`-`Log(Body)`),
@@ -190,6 +193,8 @@ $$ Log(\frac{Brain^2}{Body}) = 2*Log(Brain) - Log(Body) $$
 可以發現結果已經跟一開始的已知現象十分接近了，但仍有些許出入，  
 例如駱駝沒有跟獼猴一樣聰明，或許是因為駱駝的體重比較高，在沙漠地區需要多保存脂肪，  
 所以我們除了調整腦重的加權外，也需要對體重進行加權。  
+
+`人類 > 寬吻海豚 > 獼猴 > 單峰駱駝 > 斑貓 > 狼 > 兔子 > 黑線姬鼠`  
 
 ```{r echo=FALSE}
 ggplot(data.sample,
@@ -214,6 +219,9 @@ $$ V = L^3 ; A = L^2 ; A = V^\frac{2}{3} $$
 $$ Brain^3 = Body^2 ; Brain = Body^\frac{2}{3} $$
 所以我們的公式改寫成下述的式子：
 $$ Log(\frac{Brain^3}{Body^2}) = 3*Log(Brain) - 2*Log(Body) $$
+
+`人類 > 寬吻海豚 > 獼猴 > 單峰駱駝 > 斑貓 > 狼 > 兔子 > 黑線姬鼠`  
+
 ```{r echo=FALSE}
 ggplot(data.sample,
        aes(x = reorder(Species, 3*`Log(Brain)`-2*`Log(Body)`),
