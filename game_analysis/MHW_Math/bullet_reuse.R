@@ -8,7 +8,7 @@ fire <- function(bullet, reuse_rate){
   
   while(current > 0){
     # Reuse Fire
-    if(pracma::rand()[1] < reuse_rate){
+    if(runif(1) < reuse_rate){
       counter <- counter + 1
     }
     # Normal fire
