@@ -36,8 +36,6 @@ for(i in 1:10){
   df <- add_row(df, bullet = i, no = 1:10000)
 }
 
-df_comapre  <- tibble(bullet = 1:10)
-
 # Simulate fire
 result <- df %>% rowwise() %>%  mutate(shot_17 = fire(bullet, 0.17), shot_25 = fire(bullet, 0.25))
 
