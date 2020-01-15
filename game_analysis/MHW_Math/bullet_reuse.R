@@ -69,3 +69,5 @@ summary <- result %>% ungroup() %>% group_by(bullet) %>%
     increase_rate_0_30 = dpm_30/dpm, 
     increase_rate_17_25 = dpm_25/dpm_17,
     increase_rate_20_30 = dpm_30/dpm_20)
+
+write.csv(summary, file = "summary")
